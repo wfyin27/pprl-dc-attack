@@ -1950,9 +1950,9 @@ if __name__ ==   '__main__':
 
     #==================================base：参数设置===============================================
 
-    path1 = "2/euro-a-rbf-.csv"
-    path2 = "2/euro-b-rbf-.csv"
-    path_qgram = "2/qgram_dit-euro-rbf.csv"             # qgram字典的路径，用于计算精度等
+    path1 = "data/euro-a-rbf-.csv"
+    path2 = "data/euro-b-rbf-.csv"
+    path_qgram = "data/qgram_dit-euro-rbf.csv"             # qgram字典的路径，用于计算精度等
     attr_index  = [1,2]                                 # 使用的属性 两个 firstname lastname
     q = 2                                               # q-gram
     l = 1000                                            # Length of Bloom Filter
