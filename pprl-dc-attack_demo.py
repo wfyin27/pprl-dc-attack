@@ -1,11 +1,7 @@
-
-"""
-This is a demo version,a version capable of attacking 2sh will be released after the paper is published.
-"""
-
-
+import itertools
 import pandas as pd
 from datasketch import MinHash, MinHashLSH
+import auxiliary
 from time import *
 import numpy as np
 from collections import deque, defaultdict,Counter
@@ -192,7 +188,7 @@ def get_enc_bit(dit_enc_cahnge):
     dit_bit_mix = {}
 
     for i in dit_enc_cahnge:
-
+        
         bitarray_a = bitarray.bitarray(dit_enc_cahnge[i][0])
         bitarray_b = bitarray.bitarray(dit_enc_cahnge[i][1])
     
@@ -294,83 +290,21 @@ def minlsh_qgram(dit_qgram_mix):
 import cosinlsh
 
 def compare_minlsh(dit,dit2):
-    """
-    Optionally, use locally sensitive hash clustering or feature value based clustering
-    """
-
-    #-----------------------------use locally sensitive hash clustering-------------------------
-
-    # lenght = 0
-    # for i in dit2:
-    #     lenght=max(lenght,dit2[i][1]+dit2[i][3]+dit2[i][5])
-    # dit_qgram = {}
-    # dit_bit = {}
-    # for i in dit:
-
-    #     result =dit[i][0]+ dit[i][2] + dit[i][4] # 取前 m 个元素
-    #     result =result[:lenght]
-    #     result += [0] * (lenght - len(result))  # 如果不足 m 个元素，用 0 补齐
-    #     dit_bit[i]=result
-
-    # for i in dit2:
-    #     result =dit2[i][0]+ dit2[i][2] + dit2[i][4] # 取前 m 个元素
-    #     result =result[:lenght]
-    #     result += [0] * (lenght - len(result))  # 如果不足 m 个元素，用 0 补齐
-    #     dit_qgram[i]=result 
-
-
-    # Graph_sim_hash = cosinlsh.CosineLSH(lenght, 500,17)
-    # qg_sim_hash_dict = Graph_sim_hash.gen_sim_hash(dit_qgram)
-    # ba_sim_hash_dict = Graph_sim_hash.gen_sim_hash(dit_bit)
-
-    # plain_sim_block_dict, encode_sim_block_dict = \
-    #     Graph_sim_hash.hlsh_blocking(qg_sim_hash_dict,
-    #                                     ba_sim_hash_dict,
-    #                                     10,
-    #                                     2,
-    #                                     500,
-    #                                     17)
-    # dit_block = {}
-    # for p in plain_sim_block_dict:
-    #     for m in plain_sim_block_dict[p]:
-    #         if m not in dit_block:
-    #             dit_block[m]=[p]
-    #         else:
-    #             dit_block[m].append(p)
-    #         print(len(dit_block[m]),len(plain_sim_block_dict))
-    # block = {}
-    # k=0
-    # n=0
-    # for p in dit_block:
-    #     s=[]
-    #     for m in dit_block[p]:
-    #         s+=list(encode_sim_block_dict[m])
-        
-    #     block[p]=set(s)
-    #     if p[:-1]+'#' in block[p]:
-    #         k+=1
-    #     n+=len(block[p])
-    # print(k,len(dit_block),n//len(dit_block))
-
-    # exit()
-    # print(encode_sim_block_dict)
-
-    #-----------------------------feature value based clustering-------------------------
-
+  
     block ={}
-    lsh = MinHashLSH(threshold=0.35, num_perm=64)
+    lsh = MinHashLSH(threshold=0.275, num_perm=64)
     m1 = MinHash(num_perm=64)
-   
+    z=50
     for i in dit:
         s1 = []
         for j in dit[i][0]:
-            s1.append(str(round(j / 20) * 20)+'-0')
+            s1.append(str(round(j / z) * z)+'-0')
       
         for j in dit[i][2]:
-            s1.append(str(round(j / 20) * 20)+'-2')
+            s1.append(str(round(j / z) * z)+'-2')
           
         for j in dit[i][4]: 
-            s1.append(str(round(j / 20) * 20)+'-4')
+            s1.append(str(round(j / z) * z)+'-4')
           
         # s1.append(s)
  
@@ -388,13 +322,13 @@ def compare_minlsh(dit,dit2):
     for i in dit2:
         s1 = []
         for j in dit2[i][0]:
-            s1.append(str(round(j / 20) * 20)+'-0')
+            s1.append(str(round(j / z) * z)+'-0')
           
         for j in dit2[i][2]:
-            s1.append(str(round(j / 20) * 20)+'-2')
+            s1.append(str(round(j / z) * z)+'-2')
          
         for j in dit2[i][4]:
-            s1.append(str(round(j / 20) * 20)+'-4')
+            s1.append(str(round(j / z) * z)+'-4')
            
         set1 =set(s1)
         for d in set1:
@@ -619,7 +553,7 @@ def gen_bit_grap(dit_bit_mix,len_qgram_rm,len_qgram_add,len_qgram_mix):
     key_drop_add,more_2_add,table_bit_add   = gen_key_drop_two(dit_add_bitarray,dit_add_bitarray,'add',len_qgram_add,dit_add)
     key_drop_mix,more_2_mix,table_bit_mix   = gen_key_drop_two(dit_rm_bitarray,dit_add_bitarray,'mix',len_qgram_mix,dit_add)
 
-    key_drop_rm=max(key_drop_rm,key_drop_add,key_drop_mix)
+    # key_drop_rm=3
     end_time =   time()
     print('产生全局key的时间:',end_time-begin_time)
  
@@ -811,7 +745,7 @@ def gen_feature_bit(lst_same_bit,key_drop,more_2,global_a,len_dit_bitarray,lst2)
     lst =  {}
     block = 0
     data =[]
-    tmpbit = bitarray.bitarray(1000)    
+    tmpbit = bitarray.bitarray(l)    
     tmpbit.setall(1)
     tmp[block] = [0,tmpbit,0,0]
     lst[block]=[0,0]
@@ -836,25 +770,7 @@ def gen_feature_bit(lst_same_bit,key_drop,more_2,global_a,len_dit_bitarray,lst2)
         max_cluster = 0
         max_index = 0
         
-        # tmplsy = [0 for i in range(block+1)]
-    
-        # for i in range(0,min(len(indexes),5)):
-        #     tmplsy[dit_block[indexes[i]]]+=1
-        # tmplsy =  sorted(range(len(tmplsy)), key=lambda k:tmplsy[k],reverse=True)
-        # tmplsy=tmplsy[:min(3,block)]
-        # tmplsy = []
-        # # max_index= tmplsy.index(max(tmplsy))
-        # for i in range(0,min(len(indexes),5)):
-        #     tmplsy.append(dit_block[indexes[i]])
-    
-        # tmplsy = set(tmplsy)
-        # max_cluster=(tmp[max_index][1] & same_atr).count()/tmp[max_index][1].count()
-        
-        # if tmp_same_atr!=0 and (tmp_same_atr & same_atr).count()/tmp_same_atr.count()>0.8:
-        #     max_index = tmp_index
-        #     max_cluster=(tmp[max_index][1] & same_atr).count()/tmp[max_index][1].count()
-        
-        # else:
+
         
         for k in lst:
             s=(tmp[k][1] & same_atr).count()/tmp[k][1].count()
@@ -865,13 +781,13 @@ def gen_feature_bit(lst_same_bit,key_drop,more_2,global_a,len_dit_bitarray,lst2)
             if s>0.8:
                 break
         
-        if max_cluster >=0.55:
+        if max_cluster >=0.6:
             lst[max_index][0]+=1
             lst[max_index][1]=max(lst[max_index][1],same_atr.count())
             tmp[max_index][2][sorted_indices[j]]=1 
         
-            # if lst[max_index][0]>300:
-            #     continue
+            if lst[max_index][0]>300:
+                continue
             for k3 in indexes:
                 tmp[max_index][0][k3]+=1
             if lst[max_index][0]%5!=0:
@@ -882,8 +798,8 @@ def gen_feature_bit(lst_same_bit,key_drop,more_2,global_a,len_dit_bitarray,lst2)
                     tmp[max_index][1][k4]=True
                     dit_block[k4]=max_index
         else:
-            # if len(tmp)>max_f_rm:
-            #     continue
+            if len(tmp)>max_f_rm:
+                continue
 
             lst[block]=[1,len(indexes)]
             tmp_origin =defaultdict(lambda:0)
@@ -908,7 +824,7 @@ def gen_feature_bit(lst_same_bit,key_drop,more_2,global_a,len_dit_bitarray,lst2)
         for j in lst:
             if i2==j or lst[j][0]==0 or lst[i2][0]==0:
                 continue
-            if (tmp[i2][1]&tmp[j][1]).count()==tmp[j][1].count() :
+            if (tmp[i2][1]&tmp[j][1]).count()/tmp[j][1].count()>0.8 :
                 lst[j][0]+=lst[i2][0]
                 lst[i2][0]=0  
                 tmp[j][2]|=tmp[i2][2]
@@ -1328,11 +1244,7 @@ def get_dit_qgram(result):
         qgram_feature = {}
         tmp_qgram_dit = {}
         for i in result:
-            # print(i,result[i])
-            # print(dit_bit_mix[result[i][-1]])
-            # print(dit_qgram_mix[i+'$'])
-            
-            # exit()
+    
             atr1 = result[i][key][0]
             atr2 = result[i][key][1]
         
@@ -1367,7 +1279,7 @@ def get_dit_qgram(result):
                             tmp[str(k)]+=1
 
             for j in tmp:
-                if tmp[j]/len(qgram_feature[i][1:])>0.9:
+                if tmp[j]/len(qgram_feature[i][1:])>0.7:
                     lst[int(j)]=1
             if lst.count()==0:
                 continue
@@ -1385,30 +1297,7 @@ def get_dit_qgram(result):
                         tmp_qgram_dit[i][0] = tmp_qgram_dit[i][0] ^ (tmp_qgram_dit[i][0] & tmp_qgram_dit2[j][0])
 
 
-            # print(tmp_qgram_dit[i][0])
-        #     # exit()
-        # c= 0 
-        # for i in tmp_qgram_dit:
-            
-        #     if tmp_qgram_dit[i][1]!=0:
-        #         # print(list(tmp_qgram_dit[i][0].itersearch(1)))
-        #         for j in tmp_qgram_dit[i][2]:
 
-                        
-        #             if j not in tmp_qgram_dit:
-        #                 continue
-        #             if tmp_qgram_dit[j][0].count()==0:
-        #                 continue
-        #             # if tmp_qgram_dit[j][1]==1:
-        #             #     continue
-        #             if i!=j:
-        #                 if (tmp_qgram_dit[i][0] & tmp_qgram_dit[j][0]).count() /tmp_qgram_dit[j][0].count()>0.8:
-        #                     tmp_qgram_dit[i][0] = tmp_qgram_dit[i][0] ^ (tmp_qgram_dit[i][0] & tmp_qgram_dit2[j][0])
-                        
-                # print(list(tmp_qgram_dit[i][0].itersearch(1)),'\n')
-   
-        # print(c)
-        # exit()
         for i in tmp_qgram_dit:
             if tmp_qgram_dit[i][0].count()==0:
                 continue
@@ -1571,7 +1460,7 @@ def identification_enc_data(qgram_dit,dit_plain_same,dit_enc_total,dit1):
             # print(i,plain_enc[i],palin[i][0],palin_qgram_feature[i],palin_qgram_feature[plain_enc[i]])
 
     # print(len(palin),len(plain_enc),len(dit_plain_same))
-
+    print('asdasdasdasd',len(palin))
     return t,dit_match,more,error,none_match
    
 
@@ -1580,9 +1469,10 @@ def checkgram(qgram_dit,dit_grama):
     eror= 0
     z=0
     zz = 0
-    zz2=0
+    zz2=1
 
     zz3=0
+    zz4=0
     for i in qgram_dit:
         s=0
         ai = list(qgram_dit[i][0].itersearch(1))
@@ -1603,11 +1493,7 @@ def checkgram(qgram_dit,dit_grama):
             eror+=1
         if i not in dit_grama:
             z+=1
-        # else:
-        #     if i in dit_grama:
-        #         print(i,set(dit_grama[i]),set(qgram_dit[i][0]))
-        #     elif i in dit_gramb:
-        #         print(i,set(dit_gramb[i]),set(qgram_dit[i][0]))
+
     print(zz/zz2,zz3/zz2)
     print('准确率',c,len(qgram_dit),c/len(qgram_dit),eror,z)
 
@@ -1633,7 +1519,6 @@ def get_same_qgram(result,dit_plain_same,dit_enc_total,unmatch_plain,unmatch_bit
     for i in qgram_dit2:
         if i not in qgram_dit:
             qgram_dit[i]=qgram_dit2[i]
-
     f = open('this-qgram_dit-euro-tmh.txt', 'a',encoding='gbk')      
     for i in qgram_dit:
         s=''
@@ -1772,59 +1657,15 @@ def compare_bit_gram_feature(dit_palin_feature,dit_enc_feature):
 
     k=0
     for i in tt:
+   
         if i[:-1]==tt[i][0][0:-1]:
             k+=1
-    # block =block_result
-    # dit_a = {}
-    # for i in block:
-    #     for j in block[i]:
-    #         if j not in dit_a:
-    #             dit_a[j] = {i:block[i][j]}
-    #         else:
-    #             dit_a[j][i]=block[i][j]
-    
-    # x1 = {}
-    # x2 = {}
-    # for i in block:
-    #     block[i] = dict(sorted(block[i].items(),key=lambda x:x[1],reverse=True))
-    #     x1[i] = list(block[i].keys())
-       
-    # for i in dit_a:
-    #     dit_a[i] = dict(sorted(dit_a[i].items(),key=lambda x:x[1],reverse=True))
-    #     x2[i] = list(dit_a[i].keys()) 
-      
-    # k=0
-    # for i in x1:
-    #     if i[0:-1]+'#' in x2:
-    #         if x1[i][0][0:-1]==i[0:-1] and  x2[i[0:-1]+'#'][0][0:-1]==i[0:-1]:
-    #             k+=1
-    # print(len(x1),k)
 
-   
-    # # 调用stable_marriage函数解决稳定婚姻匹配问题
-    # matching = stable_match(x1, x2)
-   
-    # result = {}
-    # gg = 0
-    # gg2=0
-    # # 输出匹配结果
-    # for man, woman in matching:
-     
-    #     result[man[0:-1]]=dit_plain_change[man[0:-1]]+dit_enc_change[woman[0:-1]]
-        
-    #     gg2+=1
-    #     if man[0:-1]==woman[0:-1]:
-    #         gg+=1
-    #     # else:
-    #     #     print(man,woman,dit_palin_feature[man],dit_enc_feature[woman],dit_enc_feature[man[0:-1]+'#'])
-    #     # print(f"{man} is matched with {woman}")
-    # print(gg2,gg)
     print(len(tt),k,len(dit_palin_feature))
-    
     unmatch_plain,unmatch_bit = get_unmatch_record(result,dit_plain_change,dit_enc_change)
     # #已知变化的密文对应的明文 ，提取有效信息继而识别全部密文
    
-    return result,unmatch_plain,unmatch_bit,k
+    get_same_qgram(result,dit_plain_same,dit_enc_same,unmatch_plain,unmatch_bit,len(dit_plain_change),dit_grama,k)
 
 def save_compre_result(result):
 
@@ -1853,18 +1694,22 @@ def check_sim(lst1,lst2,global_a):
 def compare_fearture(batch,dit_enc_feature,dit_palin_feature,global_a,global_b,blocks):
     block = {}
     block_smh = {}
-    a_th=0.75
+    a_th=0.8
+    t=0
     for i in batch:
         index= {} 
 
         ks=0
         if i not in blocks:
             continue
+        keys=1
         for k in blocks[i]:
   
-            # if abs(dit_palin_feature[i][1]-dit_enc_feature[k][1])+abs(dit_palin_feature[i][3]-dit_enc_feature[k][3])+abs(dit_palin_feature[i][5]-dit_enc_feature[k][5])>3:
-            #     continue
-
+            if abs(dit_palin_feature[i][1]-dit_enc_feature[k][1])+abs(dit_palin_feature[i][3]-dit_enc_feature[k][3])+abs(dit_palin_feature[i][5]-dit_enc_feature[k][5])>3:
+                continue
+            a =check_sim(dit_palin_feature[i],dit_enc_feature[k],global_a)
+            if a==0:
+                continue
             ks+=1
             s1_1 = max(1,dit_palin_feature[i][1])
             s2_1 = max(1,dit_palin_feature[i][3])
@@ -1884,22 +1729,31 @@ def compare_fearture(batch,dit_enc_feature,dit_palin_feature,global_a,global_b,b
             s  = (s1*s1_1+s2*s2_1+s3*s3_1)/(s3_1+s2_1+s1_1)
             if s>a_th:
                 index[k] = s
-    
+            if int(s)==1:
+                keys+=1
+            # if keys>2:
+            #     index={}
+            #     break
         index = dict(sorted(index.items(),key=lambda x:x[1],reverse=True))
-
-
+        # print(ks)
+        if i=='AA141967$':
+            print(index)
         maxs= 0
+    
         for k in index:
             maxs=k
+            # if len(index)>3                       :
+            #     break
             if index[k]>a_th:
                 block_smh[i]=[k,index[k]]
+
             break
         if maxs not in index:
             continue
         if index[maxs]>a_th:
             block[i]=index
 
-
+        t+=1
     return [block,block_smh]
    
 def stable_match(men, women):
@@ -1929,39 +1783,22 @@ def get_gram_dit(qgram_dit):
     
     return dit_grama
 
-
-def Gen_seq_feature(dit_enc_feature):
-    lst_feature2 = {}
-    for i in dit_enc_feature[0]:
-        if i not in dit_enc_feature[0]:
-            continue
-        if i not in dit_enc_feature[1]:
-            continue
-        if i not in dit_enc_feature[2]:
-            continue        
-        rm = dit_enc_feature[0][i]
-        add = dit_enc_feature[1][i]
-        mix = dit_enc_feature[2][i]
-        lst_feature2[i] = [rm[0],rm[1],add[0],add[1],mix[0],mix[1],rm[2],add[2],mix[2]]
-    
-    return lst_feature2
-    
 if __name__ ==   '__main__':
 
-    #==================================base：参数设置===============================================
+    #==================================parameter===============================================
 
-    path1 = "data/euro-a-rbf-.csv"
-    path2 = "data/euro-b-rbf-.csv"
-    path_qgram = "data/qgram_dit-euro-rbf.csv"             # qgram字典的路径，用于计算精度等
+    path1 = "2/euro-a-rbf-.csv"
+    path2 = "2/euro-b-rbf-.csv"
+    path_qgram = "2/qgram_dit-ncvr-clk.csv"                  #qgram字典的路径，用于计算精度等
     attr_index  = [1,2]                                 # 使用的属性 两个 firstname lastname
-    q = 2                                               # q-gram
-    l = 1000                                            # Length of Bloom Filter
-    epochs = 12                                         # Utilizing multithreading to speed up the runtime, for debugging purposes only. 
-    thor_signature = 0.7                                # Minimum threshold for signatures added to clusters when adjusting clustering
+    q = 2                                               # qgram数量
+    l = 1000                                            # 布隆过滤器的长度
+    epochs = 12
+    thor_signature = 0.6
 
-    if 'rbf' in path1 or 'salt' in path1:               # The location of the hash of the q-grams is different for the different attributes of rbf and salting.
+    if 'rbf' in path1 or 'salt' in path1:
         attr_symbol = ['$','#']
-    else:
+    else:                             
         attr_symbol = ['$','$']
 
     #==================================每个qgram对应的bf位位置，用于计算精度===========================
@@ -2002,15 +1839,15 @@ if __name__ ==   '__main__':
    
     #==================================step3-2:产生一个全局的key，舍去掉一些不明显的特征==============================================
     times=time()
- 
+    global_a = 13 
     global_a,global_b = get_gobal_key(dit_qgram_mix)
-    # global_a =120                                     # Can be set based on experience
+    # global_a =1
     print('使用的全局key:',global_a,'. 单个qgram出现的频率小于此值将被丢弃','\n')
     print('step3-2 time:',time()-times,'\n')
 
     #==================================step3-3:产生qgram的特征==============================================
     times=time()
-    max_f_rm = 0                 # Limit the number of clusters to speed up, optional.
+    max_f_rm = 0
     dit_palin_feature,max_f_rm  = gen_plain_feature(dit_qgram_mix)
     print('step3-3 max_f_rm:',max_f_rm)
     print('step3-3 time:',time()-times,'\n')
@@ -2028,18 +1865,42 @@ if __name__ ==   '__main__':
     end_time =   time()
     print('构建密文特征图的时间:',end_time-begin_time,'\n')
     lst_feature2 = {}
-    
-    #==================================step4-2:产生bit的特征==============================================
-    dit_enc_feature = Gen_seq_feature(dit_enc_feature)
-   
-    #==================================step5:二部图匹配==============================================
+
+    for i in dit_enc_feature[0]:
+        if i not in dit_enc_feature[0]:
+            continue
+        if i not in dit_enc_feature[1]:
+            continue
+        if i not in dit_enc_feature[2]:
+            continue        
+        rm = dit_enc_feature[0][i]
+        add = dit_enc_feature[1][i]
+        mix = dit_enc_feature[2][i]
+        lst_feature2[i] = [rm[0],rm[1],add[0],add[1],mix[0],mix[1],rm[2],add[2],mix[2]]
+
+    dit_enc_feature=lst_feature2
+    #==================================step3-3:产生qgram的特征==============================================
 
     block_result = {}
     block_smh_result = {}
-    result,unmatch_plain,unmatch_bit,k = compare_bit_gram_feature(dit_palin_feature,dit_enc_feature)
+    compare_bit_gram_feature(dit_palin_feature,dit_enc_feature)
 
-
+    #==================================step3-3:产生qgram的特征==============================================
     
-    #==================================step6:识别q-gram以及对未识别的编码记录进行识别==============================================
+    tt = {}
+    for i in block_smh_result:
+        if block_smh_result[i][0] not in tt:
+            tt[block_smh_result[i][0]]=[i,block_smh_result[i][1]]
+        else:
+            if block_smh_result[i][1]>tt[block_smh_result[i][0]][1]:
+                tt[block_smh_result[i][0]]=[i,block_smh_result[i][1]]
 
-    get_same_qgram(result,dit_plain_same,dit_enc_same,unmatch_plain,unmatch_bit,len(dit_plain_change),dit_grama,k)
+
+    k=0
+    for i in tt:
+   
+        if i[:-1]==tt[i][0][0:-1]:
+            k+=1
+
+    print(len(tt),k,len(dit_palin_feature))
+
