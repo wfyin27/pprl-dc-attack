@@ -553,9 +553,9 @@ def gen_bit_grap(dit_bit_mix,len_qgram_rm,len_qgram_add,len_qgram_mix):
     key_drop_add,more_2_add,table_bit_add   = gen_key_drop_two(dit_add_bitarray,dit_add_bitarray,'add',len_qgram_add,dit_add)
     key_drop_mix,more_2_mix,table_bit_mix   = gen_key_drop_two(dit_rm_bitarray,dit_add_bitarray,'mix',len_qgram_mix,dit_add)
 
-    # key_drop_rm=3
+    key_drop_rm=(key_drop_rm+key_drop_add+key_drop_mix)//2
     end_time =   time()
-    print('产生全局key的时间:',end_time-begin_time)
+    print('产生全局key的时间:',end_time-begin_time,key_drop_rm)
  
     #--------------------------------生成每种变化的，每个实体的变化特征----------------------------------
     begin_time =   time()
